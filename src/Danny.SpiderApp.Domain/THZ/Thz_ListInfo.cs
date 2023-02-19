@@ -17,5 +17,13 @@ namespace Danny.SpiderApp.THZ
         public string ViewUrl { get; set; }
         public DateTime? CreationTime { get; set; }
         public DateTime? LastUpdateTime { get; set; }
+
+        public Thz_DetailInfo DetailInfo { get; set; }
+
+        public Thz_ListInfo(Guid id)
+        {
+            this.Id = id;
+            this.CreationTime = DateTime.Now;
+        }
     }
 }

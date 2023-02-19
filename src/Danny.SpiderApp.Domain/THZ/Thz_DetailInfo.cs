@@ -17,8 +17,18 @@ namespace Danny.SpiderApp.THZ
         public string Duration { get; set; }
         public string Mosaic { get; set; }
         public DateTime? ReleaseDate { get; set; }
+        public string Image1Url { get; set; }
+        public string Image2Url { get; set; }
         public string Image1Path { get; set; }
         public string Image2Path { get; set; }
         public string TorrentUrl { get; set; }
+
+        public Guid ListInfoId { get; set; }
+        public Thz_ListInfo ListInfo { get; set; }
+
+        public Thz_DetailInfo(Guid id)
+        {
+            this.Id = id;
+        }
     }
 }

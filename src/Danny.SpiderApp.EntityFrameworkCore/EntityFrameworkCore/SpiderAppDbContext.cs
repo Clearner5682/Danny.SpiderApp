@@ -96,6 +96,9 @@ public class SpiderAppDbContext :
         {
             b.HasKey(o => o.Id);
             b.ToTable("Thz_ListInfo");
+            b.HasOne(o => o.DetailInfo)
+            .WithOne(o => o.ListInfo)
+            .HasForeignKey<Thz_DetailInfo>(o => o.ListInfoId);
         });
         builder.Entity<Thz_DetailInfo>(b =>
         {

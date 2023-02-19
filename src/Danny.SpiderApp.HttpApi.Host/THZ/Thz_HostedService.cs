@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Dom;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Danny.SpiderApp.THZ
 {
@@ -14,17 +15,28 @@ namespace Danny.SpiderApp.THZ
     {
         private readonly IHttpClientFactory httpClientFactory;
         private readonly ILogger<Thz_HostedService> logger;
+        private readonly IThzRepository thzRepository;
+        private string baseUrl = "";
 
-        public Thz_HostedService(IHttpClientFactory httpClientFactory,ILogger<Thz_HostedService> logger)
+        public Thz_HostedService(IHttpClientFactory httpClientFactory,ILogger<Thz_HostedService> logger,IThzRepository thzRepository)
         {
             this.httpClientFactory = httpClientFactory;
             this.logger = logger;
+            this.thzRepository = thzRepository;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var baseUrl = "http://85thz.com/";
             var listUrl = Thz_Consts.CaribListUrl;
+
+            var thzWebSite = await this.thzRepository.GetDefaultThzWebSiteAsync();
+            if (thzWebSite == null)
+            {
+                return;
+            }
+            baseUrl = thzWebSite.Url;
+
+
             try
             {
                 Func<string, Task<int>> funcGetPageCount = (async x => { return await GetPageCountAsync(x); });
@@ -33,23 +45,34 @@ namespace Danny.SpiderApp.THZ
 
                 Func<string, Task<List<Thz_ListInfo>>> funcGetListInfo = (async x => { return await GetListInfoAsync(x); });
                 Func<string, Task<Thz_DetailInfo>> funcGetDetailInfo = (async x => { return await GetDetailInfoAsync(x); });
-                for (int i = pageCount; i <= pageCount; i++)
+                for (int i = 1; i <= pageCount; i++)
                 {
                     var listInfos = await funcGetListInfo.TryForTimes(listUrl + "&page=" + i);
+                    if (listInfos == null)
+                    {
+                        continue;
+                    }
                     var detailInfos = new List<Thz_DetailInfo>();
                     foreach(var listInfo in listInfos)
                     {
+                        //this.logger.LogWarning(JsonConvert.SerializeObject(listInfo));
                         var detailInfo = await funcGetDetailInfo.TryForTimes(baseUrl+listInfo.ViewUrl);
+                        if (detailInfo == null)
+                        {
+                            continue;
+                        }
+                        detailInfo.ListInfo = listInfo;
                         detailInfos.Add(detailInfo);
                         Thread.Sleep(1000);
+                        //this.logger.LogWarning(JsonConvert.SerializeObject(detailInfo));
                     }
 
-                    var test = 1;
+                    await this.thzRepository.SaveThzInfo(listInfos, detailInfos);
                 }
             }
             catch(Exception ex)
             {
-                throw;
+                await Task.CompletedTask;
             }
         }
 
@@ -108,7 +131,7 @@ namespace Danny.SpiderApp.THZ
                 var commentNum = element.QuerySelector("tr td.num a").TextContent;
                 var viewNum= element.QuerySelector("tr td.num em").TextContent;
 
-                var listInfo = new Thz_ListInfo();
+                var listInfo = new Thz_ListInfo(Guid.NewGuid());
                 listInfo.Category = EnumCategory.Carib;
                 listInfo.Title = title;
                 listInfo.ViewUrl = viewUrl;
@@ -123,7 +146,8 @@ namespace Danny.SpiderApp.THZ
 
         private async Task<Thz_DetailInfo> GetDetailInfoAsync(string url)
         {
-            var detailInfo = new Thz_DetailInfo();
+            this.logger.LogWarning($"detailUrl:{url}");
+            var detailInfo = new Thz_DetailInfo(Guid.NewGuid());
 
             if(url.IsNullOrEmpty())
             {
@@ -132,21 +156,22 @@ namespace Danny.SpiderApp.THZ
             IConfiguration config = Configuration.Default.WithDefaultLoader();
             IBrowsingContext context = BrowsingContext.New(config);
             IDocument document = await context.OpenAsync(url);
-            var detailInfoElement = document.QuerySelector("div.t_fsz td.t_f");
+            this.logger.LogWarning($"detailDocument:{document.ContentType}");
+            var detailInfoElement = document.QuerySelector(".t_fsz .t_f");
             var contentStr = detailInfoElement.InnerHtml;
             if (!contentStr.IsNullOrWhiteSpace())
             {
                 var contentArray = contentStr.Split("<br>");
                 if (contentArray.Length > 0)
                 {
-                    var title = contentArray[0].RemoveUseless();
-                    var actress = contentArray[1].RemoveUseless();
-                    var format = contentArray[2].RemoveUseless();
-                    var size = contentArray[3].RemoveUseless();
-                    var duration = contentArray[4].RemoveUseless();
-                    var mosaic = contentArray[5].RemoveUseless();
-                    var releaseDate = contentArray[6].RemoveUseless();
-                    var code = contentArray[8].RemoveUseless();
+                    var title = await contentArray.GetInfoAsync("【影片名稱】");
+                    var actress = await contentArray.GetInfoAsync("演】");
+                    var format = await contentArray.GetInfoAsync("【影片格式】");
+                    var size = await contentArray.GetInfoAsync("【影片大小】");
+                    var duration = await contentArray.GetInfoAsync("【影片時長】");
+                    var mosaic = await contentArray.GetInfoAsync("【是否有碼】");
+                    var releaseDate = await contentArray.GetInfoAsync("【發");
+                    var code = await contentArray.GetInfoAsync("番】");
 
                     detailInfo.Title = title;
                     detailInfo.Actress = actress;
@@ -154,7 +179,7 @@ namespace Danny.SpiderApp.THZ
                     detailInfo.Size = size;
                     detailInfo.Duration = duration;
                     detailInfo.Mosaic = mosaic;
-                    detailInfo.ReleaseDate = Convert.ToDateTime(releaseDate);
+                    //detailInfo.ReleaseDate = Convert.ToDateTime(releaseDate);
                     detailInfo.Code = code;
                 }
             }
@@ -167,8 +192,16 @@ namespace Danny.SpiderApp.THZ
             {
                 var image1Url = imageElements[0].Attributes["file"].Value;
                 var image2Url = imageElements[1].Attributes["file"].Value;
-                detailInfo.Image1Path = image1Url;
-                detailInfo.Image2Path = image2Url;
+                if (!image1Url.StartsWith("http"))
+                {
+                    image1Url=baseUrl+ image1Url;
+                }
+                if (!image2Url.StartsWith("http"))
+                {
+                    image2Url=baseUrl+ image2Url;
+                }
+                detailInfo.Image1Url = image1Url;
+                detailInfo.Image2Url = image2Url;
             }
 
             return detailInfo;

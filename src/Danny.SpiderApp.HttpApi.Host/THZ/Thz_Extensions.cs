@@ -14,11 +14,11 @@ namespace Danny.SpiderApp.THZ
             }
 
             str = str.Replace("\n", "");
-            str = str.Replace(":", "");
-            str = str.Replace("：", "");
-            var startIndex = str.IndexOf(" 【");
+            str = str.ReplaceFirst(":", "");
+            str = str.ReplaceFirst("：", "");
+            var startIndex = str.IndexOf("【");
             var endIndex = str.IndexOf("】");
-            str=str.Remove(startIndex,endIndex);
+            str=str.Remove(startIndex,(endIndex-startIndex+1));
 
             return str;
         }
@@ -35,12 +35,32 @@ namespace Danny.SpiderApp.THZ
                 }
                 catch(Exception ex)
                 {
-                    Thread.Sleep(1000);
-                    continue;
+                    Thread.Sleep(2000);
+                    
+                    return default(TOut);
                 }
             }
 
             throw new Exception("Failed too many times");
+        }
+
+        public static async Task<string> GetInfoAsync(this string[] contentArray,string propertyName)
+        {
+            var result = "";
+            if(contentArray.Length> 0)
+            {
+                foreach(var item in contentArray)
+                {
+                    if (item.Contains(propertyName))
+                    {
+                        result = item.RemoveUseless();
+                        break;
+                    }
+                }
+            }
+
+
+            return await Task.FromResult(result);
         }
     }
 }
