@@ -17,7 +17,9 @@ namespace Danny.SpiderApp.THZ
         public string Duration { get; set; }
         public string Mosaic { get; set; }
         public DateTime? ReleaseDate { get; set; }
+        // 不包含baseUrl
         public string Image1Url { get; set; }
+        // 不包含baseUrl
         public string Image2Url { get; set; }
         public string Image1Path { get; set; }
         public string Image2Path { get; set; }

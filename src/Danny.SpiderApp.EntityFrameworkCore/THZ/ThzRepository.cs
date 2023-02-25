@@ -24,7 +24,14 @@ namespace Danny.SpiderApp.THZ
         {
             var dbContext = await this.dbContextProvider.GetDbContextAsync();
 
-            return dbContext.Thz_Websites.FirstOrDefault();
+            return dbContext.Thz_Websites.FirstOrDefault(o=>o.Category==EnumCategory.Home);
+        }
+
+        public async Task<Thz_Website> GetWebsiteByCategoryAsync(EnumCategory category)
+        {
+            var dbContext = await this.dbContextProvider.GetDbContextAsync();
+
+            return dbContext.Thz_Websites.FirstOrDefault(o => o.Category == category);
         }
 
         [UnitOfWork]

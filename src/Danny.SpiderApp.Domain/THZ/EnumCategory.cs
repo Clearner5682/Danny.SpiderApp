@@ -8,6 +8,7 @@ namespace Danny.SpiderApp.THZ
 {
     public enum EnumCategory
     {
+        Home=0,
         Carib=36,
         OnePond=35,
         Heyzo=38,

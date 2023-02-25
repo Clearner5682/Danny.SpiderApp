@@ -9,6 +9,7 @@ namespace Danny.SpiderApp.THZ
 {
     public class Thz_Website:Entity<Guid>
     {
+        public EnumCategory Category { get; set; }
         public string Url { get; set; }
     }
 }

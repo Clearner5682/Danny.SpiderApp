@@ -14,6 +14,7 @@ namespace Danny.SpiderApp.THZ
         public int? CommentNum { get; set; }
         public int? ViewNum { get; set; }
         public DateTime? PostTime { get; set; }
+        // 不包含baseUrl
         public string ViewUrl { get; set; }
         public DateTime? CreationTime { get; set; }
         public DateTime? LastUpdateTime { get; set; }
