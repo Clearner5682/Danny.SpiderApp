@@ -35,20 +35,11 @@ namespace Danny.SpiderApp.THZ
         }
 
         [UnitOfWork]
-        public async Task SaveThzInfo(List<Thz_ListInfo> listInfos,List<Thz_DetailInfo> detailInfos)
+        public async Task SaveThzInfo(Thz_ListInfo listInfo, Thz_DetailInfo detailInfo)
         {
-            // 只有当ListInfo和DetailInfo都成功下载下来的才保存到数据库
-            var combinedList = from a in listInfos
-                               join b in detailInfos
-                               on a.Id equals b.ListInfo.Id
-                               select new { A = a, B = b };
-
-            if (combinedList.Any())
-            {
-                var dbContext = await this.dbContextProvider.GetDbContextAsync();
-                await dbContext.Thz_ListInfos.AddRangeAsync(combinedList.Select(o => o.A));
-                await dbContext.Thz_DetailInfos.AddRangeAsync(combinedList.Select(o => o.B));
-            }
+            var dbContext = await this.dbContextProvider.GetDbContextAsync();
+            await dbContext.Thz_ListInfos.AddAsync(listInfo);
+            await dbContext.Thz_DetailInfos.AddAsync(detailInfo);
         }
     }
 }

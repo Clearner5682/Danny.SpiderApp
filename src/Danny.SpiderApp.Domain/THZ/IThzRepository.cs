@@ -11,6 +11,6 @@ namespace Danny.SpiderApp.THZ
     {
         Task<Thz_Website> GetDefaultThzWebSiteAsync();
         Task<Thz_Website> GetWebsiteByCategoryAsync(EnumCategory category);
-        Task SaveThzInfo(List<Thz_ListInfo> listInfos, List<Thz_DetailInfo> detailInfos);
+        Task SaveThzInfo(Thz_ListInfo listInfo, Thz_DetailInfo detailInfo);
     }
 }

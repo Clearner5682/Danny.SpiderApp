@@ -36,12 +36,10 @@ namespace Danny.SpiderApp.THZ
                 catch(Exception ex)
                 {
                     Thread.Sleep(2000);
-                    
-                    return default(TOut);
                 }
             }
 
-            throw new Exception("Failed too many times");
+            return default(TOut);
         }
 
         public static async Task<string> GetInfoAsync(this string[] contentArray,string propertyName)

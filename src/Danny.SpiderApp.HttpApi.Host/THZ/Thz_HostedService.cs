@@ -81,24 +81,22 @@ namespace Danny.SpiderApp.THZ
                     {
                         continue;
                     }
-                    var detailInfos = new List<Thz_DetailInfo>();
                     foreach (var listInfo in listInfos)
                     {
                         //this.logger.LogWarning(JsonConvert.SerializeObject(listInfo));
                         listInfo.Category= category;
                         var detailInfo = await funcGetDetailInfo.TryForTimes(baseUrl + listInfo.ViewUrl);
-                        if (detailInfo == null)
+                        if (detailInfo != null)
                         {
-                            continue;
-                        }
-                        detailInfo.ListInfo = listInfo;
-                        detailInfos.Add(detailInfo);
-                        Thread.Sleep(500);
-                        this.logger.LogInformation($"GetDetailInfoSuccess, Page:{i}, Category:{category.ToString()}");
-                    }
+                            detailInfo.ListInfo = listInfo;
+                            this.logger.LogInformation($"GetDetailInfoSuccess, Page:{i}, Category:{category.ToString()}");
 
-                    await this.thzRepository.SaveThzInfo(listInfos, detailInfos);
-                    this.logger.LogInformation($"Save to db, Page:{i}, Category:{category.ToString()}");
+                            await this.thzRepository.SaveThzInfo(listInfo, detailInfo);
+                            this.logger.LogInformation($"Save to db, Page:{i}, Category:{category.ToString()}");
+                        }
+
+                        Thread.Sleep(500);
+                    }
                 }
             }
             catch (Exception ex)
